@@ -1,0 +1,19 @@
+# netlify.toml
+
+[build]
+  # Comando para construir tu proyecto Vite
+  command = "npm run build" # o "yarn build"
+  # Directorio donde Vite coloca los archivos construidos (usualmente 'dist')
+  publish = "dist"
+  # Directorio donde residen tus Netlify Functions
+  functions = "netlify/functions"
+
+[functions]
+  # Asegúrate de que Netlify use un bundler compatible con TS para las funciones
+  node_bundler = "esbuild"
+
+# Opcional pero recomendado para Single Page Applications (SPAs) como React
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -10,6 +10,7 @@ export interface State {
   fromText: string
   result: string
   loading: boolean
+  error: string | null
 }
 
 export type Action =
@@ -18,6 +19,7 @@ export type Action =
   | { type: 'SET_FROM_TEXT'; payload: string }
   | { type: 'SET_RESULT'; payload: string }
   | { type: 'INTERCHANGE_LANGUAGES' }
+  | { type: 'SET_ERROR'; payload: string | null }
 
 export enum SectionType {
   From = 'from',
