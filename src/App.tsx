@@ -1,6 +1,7 @@
+/* eslint-disable react/react-in-jsx-scope */
 import 'bootstrap/dist/css/bootstrap.min.css'
-import './App.css' // Keep this for potential custom overrides if needed
-import React, { useEffect, useCallback, useState } from 'react'
+import './App.css'
+import { useEffect, useCallback, useState } from 'react'
 import { useStoreReducer } from './hooks/useStoreReducer'
 import { Container, Row, Col, Button, Stack } from 'react-bootstrap'
 import { AUTO_LANGUAGE } from './constants'
