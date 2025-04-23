@@ -1,5 +1,5 @@
-/* eslint-disable react/react-in-jsx-scope */
-import Form from 'react-bootstrap/Form'
+import React from 'react'
+import { Form } from 'react-bootstrap'
 import { AUTO_LANGUAGE, SUPPORTED_LANGUAGES } from '../constants'
 import { FC } from 'react'
 import { FromLanguage, Language, SectionType } from '../types.d'
@@ -20,11 +20,12 @@ export const LanguageSelect: FC<Props> = ({ onChange, type, value }) => {
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     onChange(event.target.value as Language)
   }
+
   return (
     <Form.Select
       aria-label='Select language'
       onChange={handleChange}
-      style={{ width: '600px' }}
+      className='w-100'
       value={value}
     >
       {type === SectionType.From && (

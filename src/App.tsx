@@ -1,7 +1,6 @@
-/* eslint-disable react/react-in-jsx-scope */
 import 'bootstrap/dist/css/bootstrap.min.css'
-import './App.css'
-import { useEffect, useCallback } from 'react'
+import './App.css' // Keep this for potential custom overrides if needed
+import React, { useEffect, useCallback, useState } from 'react'
 import { useStoreReducer } from './hooks/useStoreReducer'
 import { Container, Row, Col, Button, Stack } from 'react-bootstrap'
 import { AUTO_LANGUAGE } from './constants'
@@ -11,51 +10,63 @@ import { SectionType } from './types.d'
 import { TextArea } from './components/TextArea'
 
 function App() {
-  // 1. Usa tu hook reducer
   const {
     fromLanguage,
     toLanguage,
     fromText,
     result,
     loading,
-    error, // Obtén el estado de error
+    error,
     interchangeLanguages,
     setFromLanguage,
     setToLanguage,
     setFromText,
-    setError, // Obtén el dispatcher de error
-    // Ya no necesitas setResult directamente aquí
+    setError,
     dispatch,
   } = useStoreReducer()
 
-  // 2. Función para llamar a la Netlify Function (adaptada para usar dispatch)
-  // Usamos useCallback para que la función no se recree en cada render,
-  // si bien con dispatch no es estrictamente necesario ya que dispatch es estable.
-  const handleTranslate = useCallback(async () => {
-    // No necesitamos verificar el texto vacío aquí si el useEffect ya lo hace
-    // No necesitamos poner loading=true aquí, SET_FROM_TEXT ya lo hace
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('theme')
+    if (savedMode) {
+      return savedMode === 'dark'
+    }
 
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (isDarkMode) {
+      root.setAttribute('data-bs-theme', 'dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      root.removeAttribute('data-bs-theme')
+      localStorage.setItem('theme', 'light')
+    }
+  }, [isDarkMode])
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+  }
+
+  const handleTranslate = useCallback(async () => {
     if (!fromText.trim()) {
-      // console.log("handleTranslate skipped: empty text"); // Debug
-      // Asegurar estado limpio si no hay texto
       dispatch({ type: 'SET_ERROR', payload: null })
       dispatch({ type: 'SET_RESULT', payload: '' })
       return
     }
-    // Construye el cuerpo de la solicitud
+
     const body: { text: string; targetLang: string; sourceLang?: string } = {
-      text: fromText, // Usa el texto del estado global
-      targetLang: toLanguage, // Usa el idioma destino del estado global
+      text: fromText,
+      targetLang: toLanguage,
     }
 
-    // Solo añade sourceLang si no es 'auto'
     if (fromLanguage !== AUTO_LANGUAGE) {
       body.sourceLang = fromLanguage
     }
 
     try {
       const response = await fetch('/.netlify/functions/translate', {
-        // Endpoint de tu función
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +76,7 @@ function App() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        // Lanza un error para que el catch lo maneje
+
         throw new Error(
           errorData.error || `Request failed with status ${response.status}`
         )
@@ -73,58 +84,53 @@ function App() {
 
       const data = await response.json()
 
-      // Actualiza el estado global con el resultado usando dispatch
-
-      dispatch({ type: 'SET_RESULT', payload: data.translation }) // Asumiendo que tienes SET_RESULT
+      dispatch({ type: 'SET_RESULT', payload: data.translation })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Translation fetch error:', err)
-      // Actualiza el estado global con el error usando dispatch
+
       setError(
         err.message || 'An unexpected error occurred during translation.'
       )
     }
-    // No necesitas setLoading(false) aquí, SET_RESULT y SET_ERROR ya lo hacen
-  }, [fromText, fromLanguage, toLanguage, setError, dispatch]) // Incluye dispatch y setError como dependencias
+  }, [fromText, fromLanguage, toLanguage, setError, dispatch])
 
-  // 3. Traducción Automática con Debounce (usando el estado del reducer)
+  // Automatic Translation with Debounce (using reducer state)
   useEffect(() => {
-    // Limpia el timeout anterior si cambian las dependencias
-
-    // Si no hay texto de entrada, no traducir.
-    // Aseguramos que loading sea false y error null a través del reducer (acción SET_FROM_TEXT)
+    // If input text is empty, do not translate.
     if (!fromText.trim()) {
-      // Opcional: podrías forzar limpieza aquí si el reducer no lo hace al 100%
-      // setError(null); // Ya lo hace SET_FROM_TEXT
-      // dispatch({ type: 'SET_RESULT', payload: ''}); // Ya lo hace SET_FROM_TEXT
       return
     }
 
-    // Programar la ejecución de handleTranslate después del delay
-    // console.log("useEffect setting timeout for:", fromText); // Debug
+    // Schedule handleTranslate execution after a delay
     const timerId = setTimeout(() => {
-      // console.log("setTimeout executing handleTranslate for:", fromText) // Debug
       handleTranslate()
-    }, 750) // Delay de 750ms
+    }, 750) // 750ms delay
 
-    // Función de limpieza: Se ejecuta si el componente se desmonta O
-    // si las dependencias [fromText, fromLanguage, toLanguage] cambian ANTES de que se ejecute el timeout.
-    // Esto cancela el timeout anterior antes de programar uno nuevo (si aplica).
+    // Cleanup function: Clears the previous timeout if dependencies change
+    // or the component unmounts before the timeout executes.
     return () => {
-      // console.log("useEffect cleanup clearing timeout ID:", timerId) // Debug
       clearTimeout(timerId)
     }
-    // Dependencias: Ejecutar cuando cambie el texto, o los idiomas seleccionados
-  }, [fromText, fromLanguage, toLanguage]) // handleTranslate está en las deps por useCallback
+    // Dependencies: Execute when text, or selected languages change
+  }, [fromText, fromLanguage, toLanguage, handleTranslate]) // handleTranslate is a dependency due to useCallback
 
   return (
-    <Container fluid>
-      <h2 style={{ width: '250px', margin: ' 0 auto', marginBottom: '10px' }}>
-        Google Translate
-      </h2>
+    <Container fluid className='d-flex flex-column align-items-center pt-4'>
+      <Button
+        onClick={toggleDarkMode}
+        variant={isDarkMode ? 'light' : 'dark'}
+        className='mb-4'
+      >
+        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+      </Button>
 
-      <Row>
-        <Col>
+      <h2 className='mb-4 text-center'> Google Translate Clone</h2>
+
+      <Row className='w-100 justify-content-center gx-3'>
+        {' '}
+        <Col xs={12} md={5} className='mb-3 mb-md-0'>
+          {' '}
           <Stack gap={2}>
             <LanguageSelect
               onChange={setFromLanguage}
@@ -138,19 +144,22 @@ function App() {
             />
           </Stack>
         </Col>
-
-        <Col>
+        <Col
+          xs={12}
+          md={2}
+          className='d-flex align-items-center justify-content-center mb-3 mb-md-0'
+        >
           <Button
             disabled={fromLanguage === AUTO_LANGUAGE}
             onClick={interchangeLanguages}
             variant='link'
             aria-label='Interchange languages'
+            className='p-0'
           >
             <ArrowsIcon />
           </Button>
         </Col>
-
-        <Col>
+        <Col xs={12} md={5}>
           <Stack gap={2}>
             <LanguageSelect
               onChange={setToLanguage}
@@ -164,14 +173,16 @@ function App() {
               onChange={() => {}}
               loading={loading}
             />
-            {error && (
-              <div className='alert alert-danger mt-2' role='alert'>
-                Error: {error}
-              </div>
-            )}
           </Stack>
         </Col>
       </Row>
+
+      {error && (
+        <div className='alert alert-danger mt-4 w-100' role='alert'>
+          {' '}
+          Error: {error}
+        </div>
+      )}
     </Container>
   )
 }

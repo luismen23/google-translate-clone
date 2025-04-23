@@ -17,17 +17,13 @@ function reducer(state: State, action: Action) {
   if (type === 'INTERCHANGE_LANGUAGES') {
     if (state.fromLanguage === AUTO_LANGUAGE) return state
 
-    // limpiar texto y resultado al intercambiar
-    // const loading = state.fromText !== '' // Si hay texto, inicia carga para nueva traducción
-
     return {
       ...state,
-      // loading, // Opcional
-      error: null, // Limpia error
+
+      error: null,
       fromLanguage: state.toLanguage,
       toLanguage: state.fromLanguage,
-      result: '', // Opcional: limpiar resultado anterior
-      // fromText: state.result // Opcional: si quieres usar el resultado como nuevo input
+      result: '',
     }
   }
 
@@ -37,9 +33,9 @@ function reducer(state: State, action: Action) {
     return {
       ...state,
       fromLanguage: action.payload,
-      result: '', // Limpia resultado anterior
+      result: '',
       error: null,
-      loading: shouldTranslateOnFromLangChange, // Inicia carga si aplica
+      loading: shouldTranslateOnFromLangChange,
     }
   }
 
@@ -49,9 +45,9 @@ function reducer(state: State, action: Action) {
     return {
       ...state,
       toLanguage: action.payload,
-      result: '', // Limpia resultado anterior
+      result: '',
       error: null,
-      loading: shouldTranslateOnToLangChange, // Inicia carga si aplica
+      loading: shouldTranslateOnToLangChange,
     }
   }
 
@@ -62,8 +58,8 @@ function reducer(state: State, action: Action) {
       ...state,
       loading: loading,
       fromText: action.payload,
-      result: '', // Limpia resultado anterior
-      error: null, // Limpia error al empezar a escribir
+      result: '',
+      error: null,
     }
   }
 
@@ -72,14 +68,14 @@ function reducer(state: State, action: Action) {
       ...state,
       loading: false,
       result: action.payload,
-      error: null, // Limpia error si la traducción fue exitosa
+      error: null,
     }
   }
 
   if (type === 'SET_ERROR') {
     return {
       ...state,
-      loading: false, // Detiene la carga en caso de error
+      loading: false,
       error: action.payload,
     }
   }
@@ -104,14 +100,9 @@ export function useStoreReducer() {
   const setFromText = (payload: string) =>
     dispatch({ type: 'SET_FROM_TEXT', payload })
 
-  // Ya no necesitas setResult directamente desde fuera, el fetch lo hará
-  // const setResult = (payload: string) =>
-  //   dispatch({ type: 'SET_RESULT', payload });
-
   // Función para manejar errores
-  const setError = (
-    payload: string | null // Añadido
-  ) => dispatch({ type: 'SET_ERROR', payload })
+  const setError = (payload: string | null) =>
+    dispatch({ type: 'SET_ERROR', payload })
 
   return {
     // State
@@ -120,16 +111,12 @@ export function useStoreReducer() {
     toLanguage,
     result,
     loading,
-    error, // Añadido
-    // Dispatchers
+    error,
     interchangeLanguages,
     setFromLanguage,
     setToLanguage,
     setFromText,
-    // Ya no exportamos setResult, exportamos setError
-    setError, // Añadido
-    // Hacemos dispatch disponible si se necesita para acciones más complejas fuera del hook
-    // aunque es mejor encapsularlas si es posible
+    setError,
     dispatch,
   }
 }
