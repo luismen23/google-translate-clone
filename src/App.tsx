@@ -114,7 +114,7 @@ function App() {
       clearTimeout(timerId)
     }
     // Dependencies: Execute when text, or selected languages change
-  }, [fromText, fromLanguage, toLanguage, handleTranslate]) // handleTranslate is a dependency due to useCallback
+  }, [fromText, fromLanguage, toLanguage]) // handleTranslate is a dependency due to useCallback
 
   return (
     <Container fluid className='d-flex flex-column align-items-center pt-4'>
